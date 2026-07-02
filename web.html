@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌈 Rainbow Pastel Calculator</title>
+    <style>
+        /* ตั้งค่าพื้นหลังหน้าเว็บเป็นสีรุ้งพาสเทลไล่เฉดสีนุ่มๆ */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #ffe5ec 0%, #ffebcc 25%, #ebf6d9 50%, #e2f0fd 75%, #f3e5f5 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* กล่องเครื่องคิดเลข */
+        .calculator {
+            background-color: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 25px;
+            border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            width: 340px;
+        }
+
+        /* หน้าจอแสดงผล */
+        .display {
+            width: 100%;
+            height: 80px;
+            background-color: #ffffff;
+            border: 3px solid #ffca3a;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.02);
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #4a4a4a;
+            text-align: right;
+            padding: 10px 15px;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        /* จัดเลย์เอาต์ปุ่มเป็น Grid */
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        /* สไตล์ของปุ่มกดทั่วไป */
+        button {
+            height: 65px;
+            border-radius: 16px;
+            border: 2px solid #ffffff;
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            transition: transform 0.1s, filter 0.2s;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        button:hover {
+            filter: brightness(1.1);
+            transform: scale(1.04);
+        }
+
+        button:active {
+            transform: scale(0.96);
+        }
+
+        /* ลงสีรุ้งแยกตามประเภทและกลุ่มของปุ่ม */
+        .btn-clear { background-color: #ff6b6b; }     /* แดง */
+        .btn-delete { background-color: #ff9248; }    /* ส้ม */
+        .btn-operator { background-color: #ffca3a; color: #4a4a4a; text-shadow: none; } /* เหลือง */
+        
+        .btn-7, .btn-8, .btn-9 { background-color: #8ac926; } /* เขียว */
+        .btn-4, .btn-5, .btn-6 { background-color: #1982c4; } /* ฟ้า */
+        .btn-1, .btn-2, .btn-3 { background-color: #6a4c93; } /* ม่วง */
+        .btn-0, .btn-dot { background-color: #ff85a1; }       /* ชมพู */
+
+        /* ปุ่มเครื่องหมายเท่ากับ (=) ไล่เฉดสีรุ้งพิเศษ */
+        .btn-equal {
+            background: linear-gradient(45deg, #ff6b6b, #ffca3a, #8ac926, #1982c4);
+            grid-column: span 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="calculator">
+        <input type="text" class="display" id="display" readonly value="0">
+        
+        <div class="buttons">
+            <button class="btn-clear" onclick="clearDisplay()">C</button>
+            <button class="btn-delete" onclick="deleteLast()">⌫</button>
+            <button class="btn-operator" onclick="appendOperator('%')">%</button>
+            <button class="btn-operator" onclick="appendOperator('/')">÷</button>
+
+            <button class="btn-7" onclick="appendNumber('7')">7</button>
+            <button class="btn-8" onclick="appendNumber('8')">8</button>
+            <button class="btn-9" onclick="appendNumber('9')">9</button>
+            <button class="btn-operator" onclick="appendOperator('*')">×</button>
+
+            <button class="btn-4" onclick="appendNumber('4')">4</button>
+            <button class="btn-5" onclick="appendNumber('5')">5</button>
+            <button class="btn-6" onclick="appendNumber('6')">6</button>
+            <button class="btn-operator" onclick="appendOperator('-')">-</button>
+
+            <button class="btn-1" onclick="appendNumber('1')">1</button>
+            <button class="btn-2" onclick="appendNumber('2')">2</button>
+            <button class="btn-3" onclick="appendNumber('3')">3</button>
+            <button class="btn-operator" onclick="appendOperator('+')">+</button>
+
+            <button class="btn-0" style="grid-column: span 2;" onclick="appendNumber('0')">0</button>
+            <button class="btn-dot" onclick="appendNumber('.')">.</button>
+            <button class="btn-equal" onclick="calculate()">=</button>
+        </div>
+    </div>
+
+    <script>
+        const display = document.getElementById('display');
+        let shouldReset = false;
+
+        function appendNumber(number) {
+            if (display.value === '0' || display.value === 'Error' || shouldReset) {
+                display.value = number;
+                shouldReset = false;
+            } else {
+                display.value += number;
+            }
+        }
+
+        function appendOperator(operator) {
+            if (display.value === 'Error') return;
+            shouldReset = false;
+            
+            // ป้องกันการใส่เครื่องหมายซ้ำซ

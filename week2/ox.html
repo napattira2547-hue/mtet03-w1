@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>❌ Tic-Tac-Toe เกม OX ⭕</title>
+    <style>
+        /* ตั้งค่าพื้นหลังและจัดวางหน้าเว็บให้อยู่ตรงกลาง */
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        /* ข้อความแสดงสถานะว่าตาใคร หรือใครชนะ */
+        .status {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #34495e;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.6);
+            padding: 8px 20px;
+            border-radius: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        /* กระดานเกม 3x3 */
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            background-color: rgba(255, 255, 255, 0.4);
+            padding: 15px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        /* ช่องตารางแต่ละช่อง */
+        .cell {
+            width: 90px;
+            height: 90px;
+            background-color: #ffffff;
+            border-radius: 14px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: all 0.2s ease;
+        }
+
+        /* เอฟเฟกต์เมื่อเอาเมาส์ไปชี้ช่องที่ยังว่าง */
+        .cell:hover:not(.x):not(.o) {
+            background-color: #f8f9fa;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+        }
+
+        /* เมื่อช่องนั้นถูกกด */
+        .cell:active {
+            transform: scale(0.95);
+        }
+
+        /* สีของตัว X (สีแดง/ชมพูสุดเท่) */
+        .cell.x {
+            color: #ff4757;
+            cursor: not-allowed;
+        }
+
+        /* สีของตัว O (สีฟ้าพาสเทล) */
+        .cell.o {
+            color: #1e90ff;
+            cursor: not-allowed;
+        }
+
+        /* ไฮไลต์ช่องที่ชนะ (ให้กระพริบและเปลี่ยนสี) */
+        .cell.winning {
+            background-color: #2ed573;
+            color: #ffffff;
+            animation: pulse 1s infinite alternate;
+        }
+
+        /* ปุ่มเริ่มเกมใหม่ */
+        .reset-btn {
+            margin-top: 25px;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #ffffff;
+            background-color: #2c3e50;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(44, 62, 80, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .reset-btn:hover {
+            background-color: #34495e;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(44, 62, 80, 0.4);
+        }
+
+        .reset-btn:active {
+            transform: scale(0.98);
+        }
+
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.05); }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>❌ Tic-Tac-Toe ⭕</h1>
+    <div class="status" id="status">ตาของ พลเยอร์ X</div>
+
+    <div class="board" id="board">
+        <div class="cell" data-index="0"></div>
+        <div class="cell" data-index="1"></div>
+        <div class="cell" data-index="2"></div>
+        <div class="cell" data-index="3"></div>
+        <div class="cell" data-index="4"></div>
+        <div class="cell" data-index="5"></div>
+        <div class="cell" data-index="6"></div>
+        <div class="cell" data-index="7"></div>
+        <div class="cell" data-index="8"></div>
+    </div>
+
+    <button class="reset-btn" onclick="resetGame()">เริ่มเกมใหม่ 🔄</button>
+
+    <script>
+        const board = document.getElementById('board');
+        const cells = document.querySelectorAll('.cell');
+        const statusText = document.getElementById('status');
+        
+        let currentPlayer = "X";
+        let gameState = ["", "", "", "", "", "", "", "", ""];
+        let isGameActive = true;
+
+        // รูปแบบการชนะ (แนวนอน, แนวตั้ง, แนวทแยง)
+        const winningConditions = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // แนวนอน
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // แนวตั้ง
+            [0, 4, 8], [2, 4, 6]             // แนวทแยง
+        ];
+
+        // ฟังก์ชันเมื่อคลิกที่ช่องตาราง
+        function handleCellClick(e) {
+            const clickedCell = e.target;
+            const clickedCellIndex = parseInt(clickedCell.getAttribute('data-index'));
+
+            // ถ้าช่องนั้นถูกกดไปแล้ว หรือเกมจบแล้ว ให้กดไม่ได้
+            if (gameState[clickedCellIndex] !== "" || !isGameActive) {
+                return;
+            }
+
+            // บันทึกค่าลงใน Array และแสดงผลบนหน้าจอ
+            gameState[clickedCellIndex] = currentPlayer;
+            clickedCell.textContent = currentPlayer;
+            clickedCell.classList.add(currentPlayer.toLowerCase());
+
+            // ตรวจสอบผลลัพธ์
+            checkResult();
+        }
+
+        // ฟังก์ชันตรวจหาผู้ชนะ
+        function checkResult() {
+            let roundWon = false;
+            let winningCells = [];
+
+            for (let i = 0; i < winningConditions.length; i++) {
+                const winCondition = winningConditions[i];
+                let a = gameState[winCondition[0]];
+                let b = gameState[winCondition[1]];
+                let c = gameState[winCondition[2]];
+
+                if (a === '' || b === '' || c === '') {
+                    continue;
+                }
+                if (a === b && b === c) {
+                    roundWon = true;
+                    winningCells = winCondition;
+                    break;
+                }
+            }
+
+            // เคสมีคนชนะ
+            if (roundWon) {
+                statusText.textContent = `🎉 ผู้ชนะคือ พลเยอร์ ${currentPlayer}!`;
+                isGameActive = false;
+                
+                // ใส่ไฮไลต์สีเขียวให้กับช่องที่ชนะ
+                winningCells.forEach(index => {
+                    cells[index].classList.add('winning');
+                });
+                return;
+            }
+
+            // เคสเสมอ (บอร์ดเต็มแต่ไม่มีคนชนะ)
+            let roundDraw = !gameState.includes("");
+            if (roundDraw) {
+                statusText.textContent = "🤝 เสมอกันไปนะ!";
+                isGameActive = false;
+                return;
+            }
+
+            // สลับเทิร์นผู้เล่น
+            currentPlayer = currentPlayer === "X" ? "O" : "X";
+            statusText.textContent = `ตาของ พลเยอร์ ${currentPlayer}`;
+        }
+
+        // ฟังก์ชันรีเซ็ตเกมใหม่
+        function resetGame() {
+            currentPlayer = "X";
+            gameState = ["", "", "", "", "", "", "", "", ""];
+            isGameActive = true;
+            statusText.textContent = "ตาของ พลเยอร์ X";
+            
+            cells.forEach(cell => {
+                cell.textContent = "";
+                cell.className = "cell"; // รีเซ็ตคลาสกลับเป็นแบบเริ่มต้นเพื่อลบสี x, o, winning ออก
+            });
+        }
+
+        // ผูกอีเวนต์การคลิกเข้ากับทุกช่องตาราง
+        cells.forEach(cell => cell.addEventListener('click', handleCellClick));
+    </script>
+</body>
+</html>

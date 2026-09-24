@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 Pin 1 Controller</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #2c3e50;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .card {
+            background-color: #34495e;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            text-align: center;
+            width: 350px;
+        }
+        h2 { margin-top: 0; color: #ecf0f1; }
+        p { color: #bdc3c7; margin-bottom: 30px; }
+        button {
+            font-size: 1.2rem;
+            padding: 15px 30px;
+            margin: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.1s, filter 0.2s;
+            width: 120px;
+        }
+        button:active { transform: scale(0.95); }
+        button:hover { filter: brightness(1.1); }
+        .btn-on { background-color: #2ecc71; color: white; }
+        .btn-off { background-color: #e74c3c; color: white; }
+        #status {
+            margin-top: 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #f1c40f;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>ESP32 Control Panel</h2>
+        <p>แผงควบคุม Output Pin 1</p>
+        
+        <button class="btn-on" onclick="controlPin('on')">เปิด (ON)</button>
+        <button class="btn-off" onclick="controlPin('off')">ปิด (OFF)</button>
+        
+        <div id="status">สถานะ: รอการสั่งงาน...</div>
+    </div>
+
+    <script>
+        // ⚠️ อย่าลืมเปลี่ยนเป็น IP Address ของ ESP32 ของนาย
+        const esp32_ip = "http://10.221.123.9"; 
+
+        function controlPin(action) {
+            const statusText = document.getElementById('status');
+            statusText.innerText = "กำลังส่งคำสั่ง...";
+
+            // กำหนดรูปแบบ URL เช่น http://192.168.1.xxx/pin1/on
+            const url = `${esp32_ip}/pin1/${action}`;
+
+            // ใช้ fetch ในการส่ง Request ไปหา ESP32 (โหมด no-cors ป้องกันปัญหา Cross-Origin)
+            fetch(url, { mode: 'no-cors' })
+                .then(() => {
+                    // ถ้าส่งสำเร็จให้อัปเดตข้อความบนหน้าจอ
+                    if (action === 'on') {
+                        statusText.innerText = "สถานะ: เปิดการทำงาน (ON) 🟢";
+                        statusText.style.color = "#2ecc71";
+                    } else {
+                        statusText.innerText = "สถานะ: ปิดการทำงาน (OFF) 🔴";
+                        statusText.style.color = "#e74c3c";
+                    }
+                })
+                .catch(error => {
+                    // ถ้าเชื่อมต่อไม่ได้ (เช่น ใส่ IP ผิด หรือ ESP32 ดับ)
+                    statusText.innerText = "❌ เกิดข้อผิดพลาดในการเชื่อมต่อ!";
+                    statusText.style.color = "#e74c3c";
+                    console.error('Error:', error);
+                });
+        }
+    </script>
+
+</body>
+</html>
